@@ -39,7 +39,7 @@ class MyGame(arcade.Window):
         self.player_move_down = False
         self.player_move_left = False
         self.player_move_right = True
-
+        self.old_hit_list = 0
         self.enemy_list = None
 
         self.game_camera = None
@@ -100,7 +100,7 @@ class MyGame(arcade.Window):
         self.gui_camera.use()
         arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50, arcade.color.BLEU_DE_FRANCE)
 
-        arcade.draw_text(f"Lives :{}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20, width=100, align="center")
+        arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20, width=120, align="center")
 
         arcade.draw_text(
             f"Time played : {self.game_timer.get_time_string()}",
@@ -122,6 +122,13 @@ class MyGame(arcade.Window):
 
         self.player.update(delta_time)
         self.enemy_list.update()
+        self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
+                                                              self.enemy_list)
+        if self.old_hit_list < len(self.fish_hit_list):
+            self.old_hit_list = len(self.fish_hit_list)
+            for EnemyFish in self.fish_hit_list:
+                EnemyFish.remove_from_sprite_lists()
+
 
     def update_player_speed(self):
         """
@@ -156,6 +163,7 @@ class MyGame(arcade.Window):
         """
         if key == arcade.key.A:
             self.player_move_left = True
+            self.player.player_scale = 1
             self.update_player_speed()
         elif key == arcade.key.D:
             self.player_move_right = True

@@ -21,8 +21,9 @@ class Player:
     PLAYER_LIVES = 3
     
     def __init__(self, spritesheet_path):
-        self.left_animation = FishAnimation(spritesheet_path, scale=0.10)
-        self.right_animation = FishAnimation(spritesheet_path, flip=True, scale=0.10)
+        self.player_scale = 0.10
+        self.left_animation = FishAnimation(spritesheet_path, scale=self.player_scale)
+        self.right_animation = FishAnimation(spritesheet_path, flip=True, scale=self.player_scale)
         self.current_animation = None
 
         self.direction = Direction.LEFT
@@ -39,7 +40,7 @@ class Player:
     def update(self, delta_time):
         if self.current_animation.center_x + self.current_animation.change_x >= gc.SCREEN_WIDTH :
             self.current_animation.change_x = 0
-        if self.current_animation.center_y + self.current_animation.change_y >= gc.SCREEN_HEIGHT :
+        if self.current_animation.center_y + self.current_animation.change_y >= gc.SCREEN_HEIGHT - 45 :
             self.current_animation.change_y = 0
         if self.current_animation.center_x + self.current_animation.change_x <= 0:
             self.current_animation.change_x = 0
