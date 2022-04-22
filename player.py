@@ -1,5 +1,7 @@
 from enum import Enum
 
+import game_constants as gc
+
 from fish_animation import FishAnimation
 
 
@@ -34,7 +36,16 @@ class Player:
     def draw(self):
         self.current_animation.draw()
 
-    def update(self, delta_time):      
+    def update(self, delta_time):
+        if self.current_animation.center_x + self.current_animation.change_x >= gc.SCREEN_WIDTH :
+            self.current_animation.change_x = 0
+        if self.current_animation.center_y + self.current_animation.change_y >= gc.SCREEN_HEIGHT :
+            self.current_animation.change_y = 0
+        if self.current_animation.center_x + self.current_animation.change_x <= 0:
+            self.current_animation.change_x = 0
+        if self.current_animation.center_y + self.current_animation.change_y <= 0:
+            self.current_animation.change_y = 0
+
         self.current_animation.center_x += self.current_animation.change_x
         self.current_animation.center_y += self.current_animation.change_y
 

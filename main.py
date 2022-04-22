@@ -12,7 +12,12 @@ from player import Player, Direction
 from enemy_fish import EnemyFish
 import game_constants as gc
 
-
+"""
+1) map border
+2) find when player touch other fish
+3) get both fish sizes
+4) if player bigger: use algorithm to increase size and despawn fish, if enemy bigger: remove life and return player to middle with i-frames
+"""
 class MyGame(arcade.Window):
     """
     La classe principale de l'application
@@ -95,7 +100,7 @@ class MyGame(arcade.Window):
         self.gui_camera.use()
         arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50, arcade.color.BLEU_DE_FRANCE)
 
-        arcade.draw_text("Lives :", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20, width=100, align="center")
+        arcade.draw_text(f"Lives :{}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20, width=100, align="center")
 
         arcade.draw_text(
             f"Time played : {self.game_timer.get_time_string()}",
