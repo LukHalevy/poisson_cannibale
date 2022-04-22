@@ -39,7 +39,7 @@ class MyGame(arcade.Window):
         self.player_move_down = False
         self.player_move_left = False
         self.player_move_right = True
-        self.old_hit_list = 0
+
         self.enemy_list = None
 
         self.game_camera = None
@@ -124,8 +124,7 @@ class MyGame(arcade.Window):
         self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                               self.enemy_list)
-        if self.old_hit_list < len(self.fish_hit_list):
-            self.old_hit_list = len(self.fish_hit_list)
+        if len(self.fish_hit_list) > 0:
             for EnemyFish in self.fish_hit_list:
                 EnemyFish.remove_from_sprite_lists()
 
