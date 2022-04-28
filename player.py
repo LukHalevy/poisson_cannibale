@@ -25,7 +25,7 @@ class Player:
         self.left_animation = FishAnimation(spritesheet_path, scale=self.player_scale)
         self.right_animation = FishAnimation(spritesheet_path, flip=True, scale=self.player_scale)
         self.current_animation = None
-
+        self.Iseconds = 0
         self.direction = Direction.LEFT
         if self.direction == Direction.LEFT:
             self.current_animation = self.left_animation
@@ -36,7 +36,8 @@ class Player:
 
     def draw(self):
         self.current_animation.draw()
-
+        self.right_animation.scale = self.player_scale
+        self.left_animation.scale = self.player_scale
     def update(self, delta_time):
         if self.current_animation.center_x + self.current_animation.change_x >= gc.SCREEN_WIDTH :
             self.current_animation.change_x = 0
@@ -51,7 +52,10 @@ class Player:
         self.current_animation.center_y += self.current_animation.change_y
 
         self.current_animation.on_update(delta_time)
-
+    def respawn(self):
+        self.current_animation.center_x = gc.SCREEN_WIDTH/2
+        self.current_animation.center_y = gc.SCREEN_HEIGHT/2
+        self.Iseconds = 3
     def change_direction(self, new_direction):
         """
         Used to update the animation according to the direction.

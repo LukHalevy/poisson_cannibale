@@ -91,7 +91,8 @@ class MyGame(arcade.Window):
         # Game camera rendering
         self.game_camera.use()
         self.back_ground.draw()
-
+        if self.player.Iseconds > 0:
+            arcade.draw_ellipse_filled(self.player.current_animation.center_x, self.player.current_animation.center_y, self.player.player_scale + self.player.player_scale, self.player.player_scale + self.player.player_scale /2, arcade.color.WHITE_SMOKE )
         self.player.draw()
 
         self.enemy_list.draw()
@@ -119,14 +120,19 @@ class MyGame(arcade.Window):
         """
         # Calculate elapsed time
         self.game_timer.accumulate()
-
+        self.player.Iseconds -= 1/60
         self.player.update(delta_time)
         self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                               self.enemy_list)
-        if len(self.fish_hit_list) > 0:
+        if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
             for EnemyFish in self.fish_hit_list:
-                EnemyFish.remove_from_sprite_lists()
+
+                if EnemyFish.scale <= self.player.player_scale:
+                    self.player.player_scale += 0.1
+                    EnemyFish.remove_from_sprite_lists()
+                else:
+                    self.player.respawn()
 
 
     def update_player_speed(self):
@@ -162,7 +168,6 @@ class MyGame(arcade.Window):
         """
         if key == arcade.key.A:
             self.player_move_left = True
-            self.player.player_scale = 1
             self.update_player_speed()
         elif key == arcade.key.D:
             self.player_move_right = True
