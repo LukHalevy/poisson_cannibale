@@ -11,6 +11,7 @@ from game_time import GameElapsedTime
 from player import Player, Direction
 from enemy_fish import EnemyFish
 import game_constants as gc
+from game_constants import GameState
 
 """
 1) map border
@@ -18,6 +19,8 @@ import game_constants as gc
 3) get both fish sizes
 4) if player bigger: use algorithm to increase size and despawn fish, if enemy bigger: remove life and return player to middle with i-frames
 """
+
+
 class MyGame(arcade.Window):
     """
     La classe principale de l'application
@@ -39,12 +42,14 @@ class MyGame(arcade.Window):
         self.player_move_down = False
         self.player_move_left = False
         self.player_move_right = True
-
+        self.GAMESTATE = GameState.GAME_MENU
         self.enemy_list = None
-
+        self.score = 0
+        self.final_score = 0
+        self.fishes_hit = 0
         self.game_camera = None
         self.gui_camera = None
-
+        self.shortcut = 0
         self.game_timer = GameElapsedTime()
 
     def setup(self):
@@ -53,8 +58,8 @@ class MyGame(arcade.Window):
         fois si vous recommencer une nouvelle partie.
         """
         self.player = Player("assets/2dfish/spritesheets/__cartoon_fish_06_yellow_idle.png")
-        self.player.current_animation.center_x = 200
-        self.player.current_animation.center_y = 200
+        self.player.current_animation.center_x = gc.SCREEN_WIDTH / 2
+        self.player.current_animation.center_y = gc.SCREEN_HEIGHT / 2 - 50
 
         self.back_ground = arcade.Sprite("assets/Background.png")
         self.back_ground.center_x = gc.SCREEN_WIDTH / 2
@@ -78,7 +83,7 @@ class MyGame(arcade.Window):
         x = -50 if direction == Direction.RIGHT else gc.SCREEN_WIDTH + 50
         y = random.randrange(50, gc.SCREEN_HEIGHT - 150)
         enemy = EnemyFish(direction, (x, y))
-        
+
         self.enemy_list.append(enemy)
 
     def on_draw(self):
@@ -92,23 +97,28 @@ class MyGame(arcade.Window):
         self.game_camera.use()
         self.back_ground.draw()
         if self.player.Iseconds > 0:
-            arcade.draw_ellipse_filled(self.player.current_animation.center_x, self.player.current_animation.center_y, self.player.player_scale + self.player.player_scale, self.player.player_scale + self.player.player_scale /2, arcade.color.WHITE_SMOKE )
+            arcade.draw_ellipse_filled(self.player.current_animation.center_x, self.player.current_animation.center_y,
+                                       self.player.player_scale + self.player.player_scale,
+                                       self.player.player_scale + self.player.player_scale / 2,
+                                       arcade.color.WHITE_SMOKE)
         self.player.draw()
 
         self.enemy_list.draw()
 
         # Gui camera rendering
         self.gui_camera.use()
-        arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50, arcade.color.BLEU_DE_FRANCE)
+        arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50,
+                                     arcade.color.BLEU_DE_FRANCE)
 
-        arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20, width=120, align="center")
-
-        arcade.draw_text(
-            f"Time played : {self.game_timer.get_time_string()}",
-            gc.SCREEN_WIDTH - 350, 
-            gc.SCREEN_HEIGHT - 35, 
-            arcade.color.WHITE_SMOKE, 
-            20, width=400, align="center")
+        arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20,
+                         width=120, align="center")
+        arcade.draw_text(f"Size : {round(self.player.player_scale * 100)}", 200, gc.SCREEN_HEIGHT - 35,
+                         arcade.color.WHITE_SMOKE, 20, width=120, align="center")
+        arcade.draw_text(f"Time played : {self.game_timer.get_time_string()}",
+                         gc.SCREEN_WIDTH - 350,
+                         gc.SCREEN_HEIGHT - 35,
+                         arcade.color.WHITE_SMOKE,
+                         20, width=400, align="center")
 
     def on_update(self, delta_time):
         """
@@ -119,21 +129,33 @@ class MyGame(arcade.Window):
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
         # Calculate elapsed time
+        self.score = self.game_timer / 2 + self.fishes_hit
         self.game_timer.accumulate()
-        self.player.Iseconds -= 1/60
+        self.player.Iseconds -= 1 / 60
         self.player.update(delta_time)
         self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
-                                                              self.enemy_list)
+                                                                  self.enemy_list)
         if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
             for EnemyFish in self.fish_hit_list:
 
                 if EnemyFish.scale <= self.player.player_scale:
-                    self.player.player_scale += 0.1
-                    EnemyFish.remove_from_sprite_lists()
+                    if EnemyFish.scale / self.player.player_scale * 0.05 < 0.01:
+                        pass
+                    else:
+                        self.fishes_hit += 1
+                        self.player.player_scale += EnemyFish.scale / self.player.player_scale * 0.05
+                        EnemyFish.remove_from_sprite_lists()
                 else:
                     self.player.respawn()
-
+        if self.player.lives <= 2:
+            self.GAMESTATE = GameState.GAME_OVER
+        if self.GAMESTATE == GameState.GAME_OVER:
+            self.final_score = self.score
+            self.game_timer = 0
+            self.player.current_animation.center_y = 1000
+            for EnemyFish in self.enemy_list:
+                EnemyFish.remove_from_sprite_lists()
 
     def update_player_speed(self):
         """
@@ -178,6 +200,40 @@ class MyGame(arcade.Window):
         elif key == arcade.key.S:
             self.player_move_down = True
             self.update_player_speed()
+        """
+        dev shortcut
+        """
+        if key == arcade.key.C:
+            self.shortcut = 1
+        if key == arcade.key.L and self.shortcut == 1:
+            self.shortcut = 2
+        if key == arcade.key.NUM_1 and self.shortcut == 2:
+            self.player.player_scale = 0.1
+            self.shortcut = 0
+        elif key == arcade.key.NUM_2 and self.shortcut == 2:
+            self.player.player_scale = 0.2
+            self.shortcut = 0
+        elif key == arcade.key.NUM_3 and self.shortcut == 2:
+            self.player.player_scale = 0.3
+            self.shortcut = 0
+        elif key == arcade.key.NUM_4 and self.shortcut == 2:
+            self.player.player_scale = 0.4
+            self.shortcut = 0
+        elif key == arcade.key.NUM_5 and self.shortcut == 2:
+            self.player.player_scale = 0.5
+            self.shortcut = 0
+        elif key == arcade.key.NUM_6 and self.shortcut == 2:
+            self.player.player_scale = 0.6
+            self.shortcut = 0
+        elif key == arcade.key.NUM_7 and self.shortcut == 2:
+            self.player.player_scale = 0.7
+            self.shortcut = 0
+        elif key == arcade.key.NUM_8 and self.shortcut == 2:
+            self.player.player_scale = 0.8
+            self.shortcut = 0
+        elif key == arcade.key.NUM_9 and self.shortcut == 2:
+            self.player.player_scale = 0.9
+            self.shortcut = 0
 
     def on_key_release(self, key, key_modifiers):
         """
