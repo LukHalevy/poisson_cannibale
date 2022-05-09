@@ -120,6 +120,11 @@ class MyGame(arcade.Window):
                          arcade.color.WHITE_SMOKE,
                          20, width=400, align="center")
 
+        if self.game_state == GameState.GAME_OVER:
+            arcade.draw_text("Cliquer sur E pour acceder le menu")
+
+
+
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -202,6 +207,9 @@ class MyGame(arcade.Window):
         elif key == arcade.key.S:
             self.player_move_down = True
             self.update_player_speed()
+
+        if key == arcade.key.E:
+            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
         """
         dev shortcut
         """
