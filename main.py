@@ -41,8 +41,8 @@ class MyGame(arcade.Window):
         self.player_move_up = False
         self.player_move_down = False
         self.player_move_left = False
-        self.player_move_right = True
-        self.GAMESTATE = GameState.GAME_MENU
+        self.player_move_right = False
+        self.GAMESTATE = GameState.GAME_RUNNING
         self.enemy_list = None
         self.score = 0
         self.final_score = 0
@@ -51,6 +51,7 @@ class MyGame(arcade.Window):
         self.gui_camera = None
         self.shortcut = 0
         self.game_timer = GameElapsedTime()
+        self.game_timer.elapsed_time
 
     def setup(self):
         """
@@ -77,14 +78,15 @@ class MyGame(arcade.Window):
         """
         Callback method to spawn a new fish.
         :param delta_time: The elapsed time.
-        :return: None
+        :return:
         """
-        direction = Direction.LEFT if random.randint(0, 1) == 1 else Direction.RIGHT
-        x = -50 if direction == Direction.RIGHT else gc.SCREEN_WIDTH + 50
-        y = random.randrange(50, gc.SCREEN_HEIGHT - 150)
-        enemy = EnemyFish(direction, (x, y))
+        if self.GAMESTATE == GameState.GAME_RUNNING:
+            direction = Direction.LEFT if random.randint(0, 1) == 1 else Direction.RIGHT
+            x = -50 if direction == Direction.RIGHT else gc.SCREEN_WIDTH + 50
+            y = random.randrange(50, gc.SCREEN_HEIGHT - 150)
+            enemy = EnemyFish(direction, (x, y))
 
-        self.enemy_list.append(enemy)
+            self.enemy_list.append(enemy)
 
     def on_draw(self):
         """
@@ -102,29 +104,35 @@ class MyGame(arcade.Window):
                                        self.player.player_scale + self.player.player_scale / 2,
                                        arcade.color.WHITE_SMOKE)
         self.player.draw()
-
+        if self.GAMESTATE == GameState.GAME_PAUSE:
+            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
         self.enemy_list.draw()
 
         # Gui camera rendering
         self.gui_camera.use()
         arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50,
                                      arcade.color.BLEU_DE_FRANCE)
-
-        arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20,
-                         width=120, align="center")
-        arcade.draw_text(f"Size : {round(self.player.player_scale * 100)}", 200, gc.SCREEN_HEIGHT - 35,
-                         arcade.color.WHITE_SMOKE, 20, width=120, align="center")
-        arcade.draw_text(f"Time played : {self.game_timer.get_time_string()}",
-                         gc.SCREEN_WIDTH - 350,
-                         gc.SCREEN_HEIGHT - 35,
-                         arcade.color.WHITE_SMOKE,
-                         20, width=400, align="center")
-
-        if self.game_state == GameState.GAME_OVER:
-            arcade.draw_text("Cliquer sur E pour acceder le menu")
-
-
-
+        if self.GAMESTATE == GameState.GAME_RUNNING:
+            self.score = self.game_timer.elapsed_time / 2 + self.fishes_hit
+            arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20,
+                             width=120, align="center")
+            arcade.draw_text(f"Size : {round(self.player.player_scale * 100)}", 200, gc.SCREEN_HEIGHT - 35,
+                             arcade.color.WHITE_SMOKE, 20, width=120, align="center")
+            arcade.draw_text(f"Time played : {self.game_timer.get_time_string()}",
+                             gc.SCREEN_WIDTH - 350,
+                             gc.SCREEN_HEIGHT - 35,
+                             arcade.color.WHITE_SMOKE,
+                             20, width=400, align="center")
+            arcade.draw_text(f"Score : {round(self.score)}",
+                             300,
+                             gc.SCREEN_HEIGHT - 35,
+                             arcade.color.WHITE_SMOKE,
+                             20, width=450, align="center")
+        if self.GAMESTATE == GameState.GAME_OVER:
+            arcade.draw_text(f"Game Over \n final score : {round(self.final_score)}", 300,
+                             gc.SCREEN_HEIGHT /2 ,
+                             arcade.color.WHITE_SMOKE,
+                             20, width=400, align="center")
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -135,11 +143,9 @@ class MyGame(arcade.Window):
         """
         # Calculate elapsed time
 
-
         self.game_timer.accumulate()
         self.player.Iseconds -= 1 / 60
         self.player.update(delta_time)
-        self.score = self.game_timer / 2 + self.fishes_hit
         self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                                   self.enemy_list)
@@ -147,19 +153,16 @@ class MyGame(arcade.Window):
             for EnemyFish in self.fish_hit_list:
 
                 if EnemyFish.scale <= self.player.player_scale:
-                    if EnemyFish.scale / self.player.player_scale * 0.05 < 0.01:
-                        pass
-                    else:
-                        self.fishes_hit += 1
-                        self.player.player_scale += EnemyFish.scale / self.player.player_scale * 0.05
-                        EnemyFish.remove_from_sprite_lists()
+                    self.fishes_hit += 1
+                    self.player.player_scale += EnemyFish.scale / self.player.player_scale * 0.05
+                    EnemyFish.remove_from_sprite_lists()
                 else:
                     self.player.respawn()
-        if self.player.lives <= 2:
+        if self.player.lives <= 0:
             self.GAMESTATE = GameState.GAME_OVER
         if self.GAMESTATE == GameState.GAME_OVER:
             self.final_score = self.score
-            self.game_timer = 0
+            self.game_timer.elapsed_time = 0
             self.player.current_animation.center_y = 1000
             for EnemyFish in self.enemy_list:
                 EnemyFish.remove_from_sprite_lists()
@@ -207,12 +210,16 @@ class MyGame(arcade.Window):
         elif key == arcade.key.S:
             self.player_move_down = True
             self.update_player_speed()
-
-        if key == arcade.key.E:
-            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
+        if self.GAMESTATE == GameState.GAME_RUNNING or GameState.GAME_PAUSE:
+            if key == arcade.key.E:
+                if self.GAMESTATE != GameState.GAME_PAUSE:
+                    self.GAMESTATE = GameState.GAME_PAUSE
+                else:
+                    self.GAMESTATE = GameState.GAME_RUNNING
         """
         dev shortcut
         """
+
         if key == arcade.key.C:
             self.shortcut = 1
         if key == arcade.key.L and self.shortcut == 1:
