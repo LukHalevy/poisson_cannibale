@@ -129,10 +129,12 @@ class MyGame(arcade.Window):
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
         # Calculate elapsed time
-        self.score = self.game_timer / 2 + self.fishes_hit
+
+
         self.game_timer.accumulate()
         self.player.Iseconds -= 1 / 60
         self.player.update(delta_time)
+        self.score = self.game_timer / 2 + self.fishes_hit
         self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                                   self.enemy_list)
