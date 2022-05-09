@@ -104,8 +104,7 @@ class MyGame(arcade.Window):
                                        self.player.player_scale + self.player.player_scale / 2,
                                        arcade.color.WHITE_SMOKE)
         self.player.draw()
-        if self.GAMESTATE == GameState.GAME_PAUSE:
-            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
+
         self.enemy_list.draw()
 
         # Gui camera rendering
@@ -127,12 +126,14 @@ class MyGame(arcade.Window):
                              300,
                              gc.SCREEN_HEIGHT - 35,
                              arcade.color.WHITE_SMOKE,
-                             20, width=450, align="center")
+                             20, width=500, align="center")
         if self.GAMESTATE == GameState.GAME_OVER:
             arcade.draw_text(f"Game Over \n final score : {round(self.final_score)}", 300,
                              gc.SCREEN_HEIGHT /2 ,
                              arcade.color.WHITE_SMOKE,
                              20, width=400, align="center")
+        if self.GAMESTATE == GameState.GAME_PAUSE:
+            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
