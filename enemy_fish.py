@@ -26,36 +26,40 @@ FISH_SIZE_TO_SCALE = {
 
 FISH_SCALE = list(FISH_SIZE_TO_SCALE.keys())
 
-"""
-Liste qui permet de modifier les chances qu'un poisson d'une certaine taille puisse être
-choisi au hasard. Si vous voulez qu'un taille ait moins de chance d'être choisi, diminuer le
-chiffre associé.
-"""
-FISH_SCALE_WEIGHT = (
-    80,  # XXXXS
-    80,  # XXXS
-    65,  # XXS
-    45,  # XS
-    35,  # S
-    30,  # M
-    25,  # ML
-    20,  # L
-    15,  # XL
-)
+
+
 
 
 class EnemyFish(FishAnimation):
     """
     Enemy fish based on FishAnimation. Will have randomized size and colors.
     """
+
     SMALL_ENEMY_SPEED = 4.0
     MEDIUM_ENEMY_SPEED = 3.0
     LARGE_ENEMY_SPEED = 2.0
 
-    def __init__(self, direction, spawn_point):
+    def __init__(self, direction, spawn_point, player_weight):
+        """
+        Liste qui permet de modifier les chances qu'un poisson d'une certaine taille puisse être
+        choisi au hasard. Si vous voulez qu'un taille ait moins de chance d'être choisi, diminuer le
+        chiffre associé.
+        """
+
+        self.FISH_SCALE_WEIGHT = (
+            player_weight**-1.5 * 0.5,  # XXXXS
+            player_weight**-1.5 * 0.5,  # XXXS
+            player_weight**-1.5 * 0.5,  # XXS
+            player_weight**-1.5 * 0.5,  # XS
+            player_weight**-1.5 * 0.5,  # S
+            player_weight**-1.5 * 0.5,  # M
+            player_weight**-1.5 * 0.5,  # ML
+            player_weight**-1.5 * 0.5,  # L
+            player_weight**-1.5 * 0.5,  # XL
+        )
         # Randomize the fish color and size
         fish_color = randint(1, 5)
-        fish_scale = choices(FISH_SCALE, weights=FISH_SCALE_WEIGHT, k=1)
+        fish_scale = choices(FISH_SCALE, weights=self.FISH_SCALE_WEIGHT, k=1)
         flipped = False if direction == Direction.LEFT else True
 
         super().__init__(

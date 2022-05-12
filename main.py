@@ -46,7 +46,7 @@ class MyGame(arcade.Window):
         self.enemy_list = None
         self.score = 0
         self.final_score = 0
-        self.fishes_hit = 0
+        self.fishes_score_modif = 0
         self.game_camera = None
         self.gui_camera = None
         self.shortcut = 0
@@ -84,7 +84,7 @@ class MyGame(arcade.Window):
             direction = Direction.LEFT if random.randint(0, 1) == 1 else Direction.RIGHT
             x = -50 if direction == Direction.RIGHT else gc.SCREEN_WIDTH + 50
             y = random.randrange(50, gc.SCREEN_HEIGHT - 150)
-            enemy = EnemyFish(direction, (x, y))
+            enemy = EnemyFish(direction, (x, y), self.player.player_scale)
 
             self.enemy_list.append(enemy)
 
@@ -98,11 +98,7 @@ class MyGame(arcade.Window):
         # Game camera rendering
         self.game_camera.use()
         self.back_ground.draw()
-        if self.player.Iseconds > 0:
-            arcade.draw_ellipse_filled(self.player.current_animation.center_x, self.player.current_animation.center_y,
-                                       self.player.player_scale + self.player.player_scale,
-                                       self.player.player_scale + self.player.player_scale / 2,
-                                       arcade.color.WHITE_SMOKE)
+
         self.player.draw()
 
         self.enemy_list.draw()
@@ -112,7 +108,8 @@ class MyGame(arcade.Window):
         arcade.draw_rectangle_filled(gc.SCREEN_WIDTH // 2, gc.SCREEN_HEIGHT - 25, gc.SCREEN_WIDTH, 50,
                                      arcade.color.BLEU_DE_FRANCE)
         if self.GAMESTATE == GameState.GAME_RUNNING:
-            self.score = self.game_timer.elapsed_time / 2 + self.fishes_hit
+
+            self.score = self.game_timer.elapsed_time * 10  + self.fishes_score_modif
             arcade.draw_text(f"Lives : {self.player.lives}", 5, gc.SCREEN_HEIGHT - 35, arcade.color.WHITE_SMOKE, 20,
                              width=120, align="center")
             arcade.draw_text(f"Size : {round(self.player.player_scale * 100)}", 200, gc.SCREEN_HEIGHT - 35,
@@ -127,13 +124,18 @@ class MyGame(arcade.Window):
                              gc.SCREEN_HEIGHT - 35,
                              arcade.color.WHITE_SMOKE,
                              20, width=500, align="center")
+            if self.player.Iseconds > 0:
+                arcade.draw_ellipse_outline(self.player.current_animation.center_x,
+                                           self.player.current_animation.center_y, self.player.player_scale * 750,
+                                           self.player.player_scale * 500, arcade.csscolor.AQUA, self.player.player_scale * 50)
         if self.GAMESTATE == GameState.GAME_OVER:
             arcade.draw_text(f"Game Over \n final score : {round(self.final_score)}", 300,
-                             gc.SCREEN_HEIGHT /2 ,
+                             gc.SCREEN_HEIGHT / 2,
                              arcade.color.WHITE_SMOKE,
                              20, width=400, align="center")
         if self.GAMESTATE == GameState.GAME_PAUSE:
             arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
+
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -144,21 +146,23 @@ class MyGame(arcade.Window):
         """
         # Calculate elapsed time
 
-        self.game_timer.accumulate()
-        self.player.Iseconds -= 1 / 60
-        self.player.update(delta_time)
-        self.enemy_list.update()
+        if self.GAMESTATE == GameState.GAME_RUNNING:
+            self.game_timer.accumulate()
+            self.player.Iseconds -= 1 / 60
+            self.player.update(delta_time)
+            self.enemy_list.update()
         self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                                   self.enemy_list)
-        if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
-            for EnemyFish in self.fish_hit_list:
+        if self.GAMESTATE == GameState.GAME_RUNNING:
+            if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
+                for EnemyFish in self.fish_hit_list:
 
-                if EnemyFish.scale <= self.player.player_scale:
-                    self.fishes_hit += 1
-                    self.player.player_scale += EnemyFish.scale / self.player.player_scale * 0.05
-                    EnemyFish.remove_from_sprite_lists()
-                else:
-                    self.player.respawn()
+                    if EnemyFish.scale <= self.player.player_scale:
+                        self.fishes_score_modif += (EnemyFish.scale / self.player.player_scale) * 100
+                        self.player.player_scale += EnemyFish.scale / self.player.player_scale * 0.05
+                        EnemyFish.remove_from_sprite_lists()
+                    else:
+                        self.player.respawn()
         if self.player.lives <= 0:
             self.GAMESTATE = GameState.GAME_OVER
         if self.GAMESTATE == GameState.GAME_OVER:
@@ -175,18 +179,18 @@ class MyGame(arcade.Window):
         """
         self.player.current_animation.change_x = 0
         self.player.current_animation.change_y = 0
+        if self.GAMESTATE == GameState.GAME_RUNNING:
+            if self.player_move_left and not self.player_move_right:
+                self.player.change_direction(Direction.LEFT)
+                self.player.current_animation.change_x = -Player.MOVEMENT_SPEED
+            elif self.player_move_right and not self.player_move_left:
+                self.player.change_direction(Direction.RIGHT)
+                self.player.current_animation.change_x = Player.MOVEMENT_SPEED
 
-        if self.player_move_left and not self.player_move_right:
-            self.player.change_direction(Direction.LEFT)
-            self.player.current_animation.change_x = -Player.MOVEMENT_SPEED
-        elif self.player_move_right and not self.player_move_left:
-            self.player.change_direction(Direction.RIGHT)
-            self.player.current_animation.change_x = Player.MOVEMENT_SPEED
-
-        if self.player_move_up and not self.player_move_down:
-            self.player.current_animation.change_y = Player.MOVEMENT_SPEED
-        elif self.player_move_down and not self.player_move_up:
-            self.player.current_animation.change_y = -Player.MOVEMENT_SPEED
+            if self.player_move_up and not self.player_move_down:
+                self.player.current_animation.change_y = Player.MOVEMENT_SPEED
+            elif self.player_move_down and not self.player_move_up:
+                self.player.current_animation.change_y = -Player.MOVEMENT_SPEED
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -252,7 +256,13 @@ class MyGame(arcade.Window):
         elif key == arcade.key.NUM_9 and self.shortcut == 2:
             self.player.player_scale = 0.9
             self.shortcut = 0
+        if key == arcade.key.MOTION_RIGHT :
+            direction = Direction.LEFT if random.randint(0, 1) == 1 else Direction.RIGHT
+            x = -50 if direction == Direction.RIGHT else gc.SCREEN_WIDTH + 50
+            y = random.randrange(50, gc.SCREEN_HEIGHT - 150)
+            enemy = EnemyFish(direction, (x, y),self.player.player_scale)
 
+            self.enemy_list.append(enemy)
     def on_key_release(self, key, key_modifiers):
         """
         Méthode invoquée à chaque fois que l'usager enlève son doigt d'une touche.
