@@ -47,15 +47,15 @@ class EnemyFish(FishAnimation):
         """
 
         self.FISH_SCALE_WEIGHT = (
-            player_weight**-1.5 * 0.5,  # XXXXS
-            player_weight**-1.5 * 0.5,  # XXXS
-            player_weight**-1.5 * 0.5,  # XXS
-            player_weight**-1.5 * 0.5,  # XS
-            player_weight**-1.5 * 0.5,  # S
-            player_weight**-1.5 * 0.5,  # M
-            player_weight**-1.5 * 0.5,  # ML
-            player_weight**-1.5 * 0.5,  # L
-            player_weight**-1.5 * 0.5,  # XL
+            -2*((player_weight-0.1)**2) + 1,  # XXXXS
+            -2*((player_weight-0.2)**2) + 1,  # XXXS
+            -2*((player_weight-0.3)**2) + 1,  # XXS
+            -2*((player_weight-0.4)**2) + 1,  # XS
+            -2*((player_weight-0.5)**2) + 1,  # S
+            -2*((player_weight-0.6)**2) + 1,  # M
+            -2*((player_weight-0.7)**2) + 1,  # ML
+            -2*((player_weight-0.8)**2) + 1,  # L
+            -2*((player_weight-0.9)**2) + 1,  # XL
         )
         # Randomize the fish color and size
         fish_color = randint(1, 5)

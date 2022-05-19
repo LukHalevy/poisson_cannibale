@@ -145,15 +145,13 @@ class MyGame(arcade.Window):
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
         # Calculate elapsed time
-
+        self.player.Iseconds -= 1 / 60
         if self.GAMESTATE == GameState.GAME_RUNNING:
             self.game_timer.accumulate()
-            self.player.Iseconds -= 1 / 60
             self.player.update(delta_time)
             self.enemy_list.update()
-        self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
+            self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                                   self.enemy_list)
-        if self.GAMESTATE == GameState.GAME_RUNNING:
             if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
                 for EnemyFish in self.fish_hit_list:
 
@@ -163,11 +161,22 @@ class MyGame(arcade.Window):
                         EnemyFish.remove_from_sprite_lists()
                     else:
                         self.player.respawn()
-        if self.player.lives <= 0:
+        if self.player.lives <= 2:
             self.GAMESTATE = GameState.GAME_OVER
         if self.GAMESTATE == GameState.GAME_OVER:
-            self.final_score = self.score
+            self.player.Iseconds=0
+            if self.score != 0:
+                self.final_score = self.score
+                Score_record = open("score records.txt", "r+")
+                self.prev_scores = Score_record.read()
+                Score_record.write(self.prev_scores)
+                Score_record.write(str(round(self.final_score)) + "\n")
+                Score_record.close()
+                self.game_timer.elapsed_time = 0
+            self.score = 0
             self.game_timer.elapsed_time = 0
+            self.fishes_score_modif = 0
+
             self.player.current_animation.center_y = 1000
             for EnemyFish in self.enemy_list:
                 EnemyFish.remove_from_sprite_lists()
@@ -221,6 +230,15 @@ class MyGame(arcade.Window):
                     self.GAMESTATE = GameState.GAME_PAUSE
                 else:
                     self.GAMESTATE = GameState.GAME_RUNNING
+
+        if self.GAMESTATE == GameState.GAME_OVER and key == arcade.key.SPACE:
+            self.player.lives = 3
+            self.GAMESTATE = GameState.GAME_RUNNING
+            self.player.current_animation.center_x = gc.SCREEN_WIDTH / 2
+            self.player.current_animation.center_y = gc.SCREEN_HEIGHT / 2
+            self.fishes_score_modif = 0
+            self.game_timer.elapsed_time = 0
+            self.score = 0
         """
         dev shortcut
         """
