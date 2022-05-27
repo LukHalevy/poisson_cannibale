@@ -52,7 +52,8 @@ class MyGame(arcade.Window):
         self.shortcut = 0
         self.game_timer = GameElapsedTime()
         self.game_timer.elapsed_time
-
+        self.shrink = 0
+        self.button = 0
     def setup(self):
         """
         Configurer les variables de votre jeu ici. Il faut appeler la méthode une nouvelle
@@ -124,6 +125,11 @@ class MyGame(arcade.Window):
                              gc.SCREEN_HEIGHT - 35,
                              arcade.color.WHITE_SMOKE,
                              20, width=500, align="center")
+            if self.player.player_scale >= 1:
+                self.shrink = 90
+            if self.shrink > 0:
+                self.player.player_scale -= 0.01
+                self.shrink -= 1
             if self.player.Iseconds > 0:
                 arcade.draw_ellipse_outline(self.player.current_animation.center_x,
                                            self.player.current_animation.center_y, self.player.player_scale * 750,
@@ -135,7 +141,11 @@ class MyGame(arcade.Window):
                              20, width=400, align="center")
         if self.GAMESTATE == GameState.GAME_PAUSE:
             arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
-
+            arcade.draw_rectangle_filled(gc.SCREEN_WIDTH/2,gc.SCREEN_HEIGHT/2 + 100,300,100,arcade.csscolor.BLACK)
+            arcade.draw_text("resume",gc.SCREEN_WIDTH/2 - 150,gc.SCREEN_HEIGHT/2 + 90, arcade.csscolor.WHITE_SMOKE,20,300,"center",bold=True)
+            if self.button == 1:
+                arcade.draw_rectangle_outline(gc.SCREEN_WIDTH / 2, gc.SCREEN_HEIGHT / 2 + 100, 300, 100,
+                                          arcade.csscolor.WHITE_SMOKE, 10)
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -145,11 +155,13 @@ class MyGame(arcade.Window):
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
         # Calculate elapsed time
+
         self.player.Iseconds -= 1 / 60
         if self.GAMESTATE == GameState.GAME_RUNNING:
             self.game_timer.accumulate()
             self.player.update(delta_time)
             self.enemy_list.update()
+
             self.fish_hit_list = arcade.check_for_collision_with_list(self.player.current_animation,
                                                                   self.enemy_list)
             if len(self.fish_hit_list) > 0 and self.player.Iseconds <= 0:
@@ -161,7 +173,7 @@ class MyGame(arcade.Window):
                         EnemyFish.remove_from_sprite_lists()
                     else:
                         self.player.respawn()
-        if self.player.lives <= 2:
+        if self.player.lives <= 0:
             self.GAMESTATE = GameState.GAME_OVER
         if self.GAMESTATE == GameState.GAME_OVER:
             self.player.Iseconds=0
@@ -172,9 +184,8 @@ class MyGame(arcade.Window):
                 Score_record.write(self.prev_scores)
                 Score_record.write(str(round(self.final_score)) + "\n")
                 Score_record.close()
-                self.game_timer.elapsed_time = 0
+            self.game_timer.reset()
             self.score = 0
-            self.game_timer.elapsed_time = 0
             self.fishes_score_modif = 0
 
             self.player.current_animation.center_y = 1000
@@ -200,7 +211,16 @@ class MyGame(arcade.Window):
                 self.player.current_animation.change_y = Player.MOVEMENT_SPEED
             elif self.player_move_down and not self.player_move_up:
                 self.player.current_animation.change_y = -Player.MOVEMENT_SPEED
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        if self.GAMESTATE == GameState.GAME_PAUSE:
+            if x < gc.SCREEN_WIDTH / 2 + 150 and x > gc.SCREEN_WIDTH / 2 - 150 and y < + gc.SCREEN_HEIGHT / 2 + 150 and y > + gc.SCREEN_HEIGHT / 2 + 50:
+                self.GAMESTATE = GameState.GAME_RUNNING
+    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
 
+        if x < gc.SCREEN_WIDTH / 2 + 150 and x > gc.SCREEN_WIDTH / 2 - 150 and y < + gc.SCREEN_HEIGHT / 2 + 150 and y > + gc.SCREEN_HEIGHT / 2 + 50:
+            self.button = 1
+        else:
+            self.button = 0
     def on_key_press(self, key, key_modifiers):
         """
         Cette méthode est invoquée à chaque fois que l'usager tape une touche
@@ -231,13 +251,16 @@ class MyGame(arcade.Window):
                 else:
                     self.GAMESTATE = GameState.GAME_RUNNING
 
+
+
+
         if self.GAMESTATE == GameState.GAME_OVER and key == arcade.key.SPACE:
             self.player.lives = 3
             self.GAMESTATE = GameState.GAME_RUNNING
             self.player.current_animation.center_x = gc.SCREEN_WIDTH / 2
             self.player.current_animation.center_y = gc.SCREEN_HEIGHT / 2
+            self.player.player_scale = 0.1
             self.fishes_score_modif = 0
-            self.game_timer.elapsed_time = 0
             self.score = 0
         """
         dev shortcut

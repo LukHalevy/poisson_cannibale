@@ -15,7 +15,8 @@ class GameElapsedTime:
         :return:
         """
         self.elapsed_time = time.time() - self.start_time
-
+    def reset(self):
+        self.start_time = time.time()
     def get_time_string(self):
         """
         Used to get a nice formatted string to display
