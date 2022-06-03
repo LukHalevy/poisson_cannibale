@@ -54,6 +54,7 @@ class MyGame(arcade.Window):
         self.game_timer.elapsed_time
         self.shrink = 0
         self.button = 0
+        self.resume_button = 
     def setup(self):
         """
         Configurer les variables de votre jeu ici. Il faut appeler la méthode une nouvelle
@@ -144,8 +145,7 @@ class MyGame(arcade.Window):
             arcade.draw_rectangle_filled(gc.SCREEN_WIDTH/2,gc.SCREEN_HEIGHT/2 + 100,300,100,arcade.csscolor.BLACK)
             arcade.draw_text("resume",gc.SCREEN_WIDTH/2 - 150,gc.SCREEN_HEIGHT/2 + 90, arcade.csscolor.WHITE_SMOKE,20,300,"center",bold=True)
             if self.button == 1:
-                arcade.draw_rectangle_outline(gc.SCREEN_WIDTH / 2, gc.SCREEN_HEIGHT / 2 + 100, 300, 100,
-                                          arcade.csscolor.WHITE_SMOKE, 10)
+                arcade.resume
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -181,6 +181,8 @@ class MyGame(arcade.Window):
                 self.final_score = self.score
                 Score_record = open("score records.txt", "r+")
                 self.prev_scores = Score_record.read()
+                Score_record.close()
+                Score_record = open("score records.txt", "w")
                 Score_record.write(self.prev_scores)
                 Score_record.write(str(round(self.final_score)) + "\n")
                 Score_record.close()
@@ -260,6 +262,7 @@ class MyGame(arcade.Window):
             self.player.current_animation.center_x = gc.SCREEN_WIDTH / 2
             self.player.current_animation.center_y = gc.SCREEN_HEIGHT / 2
             self.player.player_scale = 0.1
+            self.player.draw()
             self.fishes_score_modif = 0
             self.score = 0
         """
