@@ -8,15 +8,20 @@ class GameElapsedTime:
     def __init__(self):
         self.start_time = time.time()
         self.elapsed_time = None
-
+        self.stored_time = 0
+        self.pause_time = 0
     def accumulate(self):
         """
         Called on each update to accumulate time.
         :return:
         """
-        self.elapsed_time = time.time() - self.start_time
+        self.elapsed_time = time.time() - self.start_time - self.pause_time
     def reset(self):
         self.start_time = time.time()
+    def pause(self):
+        self.stored_time = time.time() - self.pause_time
+    def unpause(self):
+        self.pause_time = time.time() - self.stored_time
     def get_time_string(self):
         """
         Used to get a nice formatted string to display

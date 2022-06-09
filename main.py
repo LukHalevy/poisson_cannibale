@@ -6,7 +6,7 @@ L'utilisateur doit aussi éviter les poissons plus gros afin de ne pas perdre de
 import random
 
 import arcade
-
+import menubuttons
 from game_time import GameElapsedTime
 from player import Player, Direction
 from enemy_fish import EnemyFish
@@ -54,7 +54,12 @@ class MyGame(arcade.Window):
         self.game_timer.elapsed_time
         self.shrink = 0
         self.button = 0
-        self.resume_button = 
+        self.resume_button = menubuttons.Resume()
+        self.quit_button = menubuttons.Quit()
+        self.NewGame_button = menubuttons.Newgame()
+        self.Leader_button = menubuttons.LeaderboardButton()
+        self.Options_button = menubuttons.Options()
+        self.QuitGame_button = menubuttons.QuitGame()
     def setup(self):
         """
         Configurer les variables de votre jeu ici. Il faut appeler la méthode une nouvelle
@@ -141,11 +146,9 @@ class MyGame(arcade.Window):
                              arcade.color.WHITE_SMOKE,
                              20, width=400, align="center")
         if self.GAMESTATE == GameState.GAME_PAUSE:
-            arcade.draw_rectangle_filled(512, 382, 1074, 764, arcade.csscolor.ROYAL_BLUE)
-            arcade.draw_rectangle_filled(gc.SCREEN_WIDTH/2,gc.SCREEN_HEIGHT/2 + 100,300,100,arcade.csscolor.BLACK)
-            arcade.draw_text("resume",gc.SCREEN_WIDTH/2 - 150,gc.SCREEN_HEIGHT/2 + 90, arcade.csscolor.WHITE_SMOKE,20,300,"center",bold=True)
-            if self.button == 1:
-                arcade.resume
+            self.resume_button.update()
+            self.quit_button.update()
+
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -193,7 +196,14 @@ class MyGame(arcade.Window):
             self.player.current_animation.center_y = 1000
             for EnemyFish in self.enemy_list:
                 EnemyFish.remove_from_sprite_lists()
-
+        if self.GAMESTATE == GameState.GAME_MENU:
+            self.player.Iseconds = 0
+            self.game_timer.reset()
+            self.score = 0
+            self.fishes_score_modif = 0
+            self.player.current_animation.center_y = 1000
+            for EnemyFish in self.enemy_list:
+                EnemyFish.remove_from_sprite_lists()
     def update_player_speed(self):
         """
         Will update player position according to various movement flags.
@@ -215,14 +225,21 @@ class MyGame(arcade.Window):
                 self.player.current_animation.change_y = -Player.MOVEMENT_SPEED
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         if self.GAMESTATE == GameState.GAME_PAUSE:
-            if x < gc.SCREEN_WIDTH / 2 + 150 and x > gc.SCREEN_WIDTH / 2 - 150 and y < + gc.SCREEN_HEIGHT / 2 + 150 and y > + gc.SCREEN_HEIGHT / 2 + 50:
+            if self.quit_button.sprite.collides_with_point((x, y)):
+                self.GAMESTATE = GameState.GAME_MENU
+            if self.resume_button.sprite.collides_with_point((x, y)):
+                self.game_timer.unpause()
                 self.GAMESTATE = GameState.GAME_RUNNING
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
-
-        if x < gc.SCREEN_WIDTH / 2 + 150 and x > gc.SCREEN_WIDTH / 2 - 150 and y < + gc.SCREEN_HEIGHT / 2 + 150 and y > + gc.SCREEN_HEIGHT / 2 + 50:
-            self.button = 1
+        if self.quit_button.sprite.collides_with_point((x,y)):
+            self.quit_button.button = True
         else:
-            self.button = 0
+            self.quit_button.button = False
+
+        if self.resume_button.sprite.collides_with_point((x,y)):
+            self.resume_button.button = True
+        else:
+            self.resume_button.button = False
     def on_key_press(self, key, key_modifiers):
         """
         Cette méthode est invoquée à chaque fois que l'usager tape une touche
@@ -246,12 +263,10 @@ class MyGame(arcade.Window):
         elif key == arcade.key.S:
             self.player_move_down = True
             self.update_player_speed()
-        if self.GAMESTATE == GameState.GAME_RUNNING or GameState.GAME_PAUSE:
+        if self.GAMESTATE == GameState.GAME_RUNNING:
             if key == arcade.key.E:
-                if self.GAMESTATE != GameState.GAME_PAUSE:
-                    self.GAMESTATE = GameState.GAME_PAUSE
-                else:
-                    self.GAMESTATE = GameState.GAME_RUNNING
+                self.game_timer.pause()
+                self.GAMESTATE = GameState.GAME_PAUSE
 
 
 
